@@ -250,3 +250,42 @@ class Board:
             self.make_move(start_pos, end_pos)
 
         return move
+
+    # Helper Function - Get playable positions (non invalid)
+    def get_non_invalid_moves(self):
+        """Helper function to obtain all non invalid positions"""
+        # list of valid positions
+        valid_positions = []
+        for row in range(self.size):
+            for col in range(self.size):
+                if self.board[row][col] != "INVALID":
+                    # Add to valid moves
+                    valid_positions.append((row, col))
+
+        return valid_positions
+
+    # Shuffle board
+    def shuffle_board(self):
+        """Takes the same piece count (empty and filled pegs) and scrambles them across the current board"""
+        playable_positions = self.get_non_invalid_moves
+
+        # Get the current count of pegs and open positions
+        peg_count = self.count_pegs()
+        empty_count = len(playable_positions) - peg_count
+
+        # Create a list that contains corresponding number of valid pegs and empty positions
+        pieces = []
+        for _ in range(peg_count):
+            pieces.append("PEG")
+        for _ in range(empty_count):
+            pieces.append("EMPTY")
+
+        # Shuffle the pieces
+        random.shuffle(pieces)
+
+        # Put the shuffled pieces back on the board
+        for i in range(len(playable_positions)):
+            # Go in order, select that position
+            row, col = playable_positions[i]
+            # Set that peg value to the new randomized value at the same index in pieces
+            self.board[col][row] = pieces[i]
