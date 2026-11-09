@@ -26,6 +26,12 @@ class MenuButton:
         """Returns True if mouse_pos is inside the button."""
         return self.rect.collidepoint(mouse_pos)
 
+    def update_text(self, new_text):
+        """Updates the button text and re-renders the surface"""
+        self.text = new_text
+        self.surface = self.font.render(self.text, True, self.text_color)
+        self.rect = self.surface.get_rect(center=self.center_pos)
+
 
 class RadioButton:
     """A circular radio button with a text label."""
