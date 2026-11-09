@@ -69,12 +69,14 @@ class PegSolitaireApp:
         # Instantiate
         self.audio_button = components.AudioButton(1170, 635, 60, 50)
 
-        # Scale Background Images
-
         # Fonts
         self.font = pygame.font.Font(FONT_PATH, 40)
         self.title_font = pygame.font.Font(FONT_PATH, 70)
         self.small_font = pygame.font.Font(FONT_PATH, 20)
+
+        # Hints
+        self.show_hints_timer = 0
+        self.hint_active = False
 
     def run(self):
         """Starts the application loop by launching the main menu."""
@@ -293,6 +295,8 @@ class PegSolitaireApp:
         random_layout_button = components.MenuButton(
             "RANDOM LAYOUT", self.small_font, "White", "Yellow", (1085, 455)
         )
+        # Hint button
+        hint_button = components.HintButton(1010, 510, 150, 45)
 
         # Draw
         while True:
@@ -320,6 +324,12 @@ class PegSolitaireApp:
                 self.volume_img,
                 self.muted_img,
             )
+
+            # Hint timer
+            # If hints are active, auto-turn them off after 2 seconds (2000 ms)
+            if self.hint_active:
+                if pygame.time.get_ticks() - self.show_hints_timer > 2000:
+                    self.hint_active = False
 
             # Check for win/loss each fram
             if game_over_text is None:
@@ -426,6 +436,17 @@ class PegSolitaireApp:
                         pygame.draw.circle(
                             self.screen, color, rect.center, cell_size // 3
                         )
+
+                        # Draw hint highlight ring if hint is active and this peg has legal moves
+                        if self.hint_active and game_board.get_legal_moves((row, col)):
+                            pygame.draw.circle(
+                                self.screen,
+                                (255, 165, 0),
+                                rect.center,
+                                cell_size // 3 + 4,
+                                3,
+                            )
+
                     # Empty Placeholders
                     elif cell_type == "EMPTY":
                         if (row, col) in legal_moves:
@@ -456,6 +477,7 @@ class PegSolitaireApp:
                 autoplay_button.draw(self.screen, mouse_pos)
                 shuffle_button.draw(self.screen, mouse_pos)
                 random_layout_button.draw(self.screen, mouse_pos)
+                hint_button.draw(self.screen, self.small_font)
 
             # Event Loop
             for event in pygame.event.get():
@@ -512,6 +534,33 @@ class PegSolitaireApp:
                             selected_peg = None
                             pending_auto_move = None
                             message_text = None
+
+                        # Hints
+                        # If hints are active, any click dismisses them first
+                        if self.hint_active:
+                            self.hint_active = False
+
+                        # Check hint button click
+                        if game_over_text is None and hint_button.check_click(
+                            event.pos
+                        ):
+                            # Find all pegs that have legal moves
+                            movable_pegs = []
+                            for r in range(size):
+                                for c in range(size):
+                                    if game_board.board[r][
+                                        c
+                                    ] == "PEG" and game_board.get_legal_moves((r, c)):
+                                        movable_pegs.append((r, c))
+
+                            if not movable_pegs:
+                                message_text = "NO MORE LEGAL MOVES, GAME IS OVER!"
+                            else:
+                                self.hint_active = True
+                                self.show_hints_timer = pygame.time.get_ticks()
+                                message_text = (
+                                    f"HINT: {len(movable_pegs)} PEGS CAN BE MOVED"
+                                )
 
                     # Make sure grid clicks only active when game is not over
                     if game_over_text is not None:

@@ -106,3 +106,30 @@ class ThemeButton:
     def check_click(self, mouse_pos):
         """Returns True if the button was clicked."""
         return self.rect.collidepoint(mouse_pos)
+
+
+class HintButton:
+    """A button that triggers move hints during gameplay."""
+
+    def __init__(self, x, y, width, height):
+        self.rect = pygame.Rect(x, y, width, height)
+
+    def draw(self, surface, font, is_enabled=True):
+        # Don't draw if the game is over (as you specified!)
+        if not is_enabled:
+            return
+
+        # Draw white background box with a distinct border (e.g., orange or purple)
+        pygame.draw.rect(surface, (255, 255, 255), self.rect)
+        pygame.draw.rect(surface, (255, 140, 0), self.rect, 3)  # Orange border
+
+        # Render "Hint?" text inside
+        text_surf = font.render("Hint?", True, (0, 0, 0))
+        text_rect = text_surf.get_rect(center=self.rect.center)
+        surface.blit(text_surf, text_rect)
+
+    def check_click(self, mouse_pos, is_enabled=True):
+        """Returns True if the button was clicked and is active."""
+        if not is_enabled:
+            return False
+        return self.rect.collidepoint(mouse_pos)
