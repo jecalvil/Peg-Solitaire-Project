@@ -267,7 +267,7 @@ class Board:
     # Shuffle board
     def shuffle_board(self):
         """Takes the same piece count (empty and filled pegs) and scrambles them across the current board"""
-        playable_positions = self.get_non_invalid_moves
+        playable_positions = self.get_non_invalid_moves()
 
         # Get the current count of pegs and open positions
         peg_count = self.count_pegs()

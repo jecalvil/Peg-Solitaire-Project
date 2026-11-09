@@ -395,6 +395,12 @@ class PegSolitaireApp:
                                 autoplay_button.update_text("AUTOPLAY: OFF")
 
                         # Shuffle Pegs Button
+                        if shuffle_button.check_click(event.pos):
+                            game_board.shuffle_board()
+                            # Deselect anything if selected
+                            selected_peg = None
+                            pending_auto_move = None
+                            message_text = None
 
                         # Random Layout Button
 
