@@ -82,3 +82,27 @@ class AudioButton:
     def check_click(self, mouse_pos):
         """Returns True if the button was clicked."""
         return self.rect.collidepoint(mouse_pos)
+
+
+class ThemeButton:
+    """A persistent button that toggles and displays the current background theme."""
+
+    def __init__(self, x, y, width, height):
+        self.rect = pygame.Rect(x, y, width, height)
+
+    def draw(self, surface, theme_index, font):
+        # Draw white background box with a blue border
+        pygame.draw.rect(surface, (255, 255, 255), self.rect)
+        pygame.draw.rect(surface, (0, 0, 255), self.rect, 3)
+
+        # Show letter abbreviation for the active theme (0: G for Green, 1: R for Red, 2: W for Wood)
+        labels = ["G", "R", "W"]
+        label_text = labels[theme_index] if theme_index < len(labels) else "T"
+
+        text_surf = font.render(label_text, True, (0, 0, 0))
+        text_rect = text_surf.get_rect(center=self.rect.center)
+        surface.blit(text_surf, text_rect)
+
+    def check_click(self, mouse_pos):
+        """Returns True if the button was clicked."""
+        return self.rect.collidepoint(mouse_pos)

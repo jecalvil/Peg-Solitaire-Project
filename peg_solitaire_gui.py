@@ -13,10 +13,6 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Theme Paths
 
-# Future Implementation
-
-# Music Paths - Future Implementation
-
 # Font Paths
 FONT_PATH = os.path.join(SCRIPT_DIR, "PressStart2P-Regular.ttf")
 
@@ -30,7 +26,25 @@ class PegSolitaireApp:
         self.screen = pygame.display.set_mode((1280, 720))
         pygame.display.set_caption("Peg Solitaire")
 
-        # Load Themes
+        # === Load Themes ===
+        self.theme_index = 0  # 0: Green, 1: Red, 2: Wood
+        theme_files = [
+            "green_background.jpg",
+            "red_background.jpg",
+            "wood_background.jpg",
+        ]
+        self.themes = []
+
+        for filename in theme_files:
+            path = os.path.join(SCRIPT_DIR, "images", filename)
+            try:
+                img = pygame.image.load(path).convert()
+                self.themes.append(pygame.transform.scale(img, (1280, 720)))
+            except Exception as e:
+                print(f"Warning: Could not load theme image {filename}: {e}")
+
+        # Instantiate theme button on the bottom left
+        self.theme_button = components.ThemeButton(50, 635, 60, 50)
 
         # === Audio ===
         # Load Audio
@@ -78,13 +92,17 @@ class PegSolitaireApp:
             "CLOSE GAME", self.font, "White", "Yellow", (640, 420)
         )
 
+        # Draw
         while True:
-
-            # Draw background
-            self.screen.fill((30, 30, 30))
 
             # Current Mouse Position
             mouse_pos = pygame.mouse.get_pos()
+
+            # Draw current theme background
+            if self.themes:
+                self.screen.blit(self.themes[self.theme_index], (0, 0))
+            else:
+                self.screen.fill((30, 30, 30))  # Fallback
 
             # Title Text
             title_surface = self.title_font.render("PEG SOLITAIRE", True, "White")
@@ -118,6 +136,12 @@ class PegSolitaireApp:
                     elif self.audio_button.check_click(event.pos):
                         self.sound_manager.toggle_music()
 
+                    # Theme button
+                    elif self.theme_button.check_click(event.pos):
+                        if self.themes:
+                            self.theme_index = (self.theme_index + 1) % len(self.themes)
+
+            self.theme_button.draw(self.screen, self.theme_index, self.small_font)
             pygame.display.update()
             clock.tick(60)
 
@@ -154,7 +178,11 @@ class PegSolitaireApp:
         # Draw
         while True:
             # Fill screen and mouse pos
-            self.screen.fill((30, 30, 30))
+            # Draw current theme background
+            if self.themes:
+                self.screen.blit(self.themes[self.theme_index], (0, 0))
+            else:
+                self.screen.fill((30, 30, 30))  # Fallback
             mouse_pos = pygame.mouse.get_pos()
 
             # Draw curent settings title
@@ -215,6 +243,11 @@ class PegSolitaireApp:
                     elif self.audio_button.check_click(event.pos):
                         self.sound_manager.toggle_music()
 
+                    # Theme
+                    elif self.theme_button.check_click(event.pos):
+                        if self.themes:
+                            self.theme_index = (self.theme_index + 1) % len(self.themes)
+
                     # Check for clicks on board type buttons
                     for btn in board_type_buttons:
                         if btn.check_click(event.pos):
@@ -225,6 +258,7 @@ class PegSolitaireApp:
                         if btn.check_click(event.pos):
                             selected_board_size = btn.value
 
+            self.theme_button.draw(self.screen, self.theme_index, self.small_font)
             pygame.display.update()
             clock.tick(60)
 
@@ -262,7 +296,11 @@ class PegSolitaireApp:
 
         # Draw
         while True:
-            self.screen.fill((30, 30, 30))
+            # Draw current theme background
+            if self.themes:
+                self.screen.blit(self.themes[self.theme_index], (0, 0))
+            else:
+                self.screen.fill((30, 30, 30))  # Fallback
             mouse_pos = pygame.mouse.get_pos()
             current_time = pygame.time.get_ticks()
 
@@ -442,6 +480,11 @@ class PegSolitaireApp:
                     elif self.audio_button.check_click(event.pos):
                         self.sound_manager.toggle_music()
 
+                    # Theme
+                    elif self.theme_button.check_click(event.pos):
+                        if self.themes:
+                            self.theme_index = (self.theme_index + 1) % len(self.themes)
+
                     # Buttons for when game is off
                     if game_over_text is None:
                         # Automated play button
@@ -536,6 +579,7 @@ class PegSolitaireApp:
                             elif selected_peg is not None:
                                 message_text = "MOVE NOT ALLOWED"
 
+            self.theme_button.draw(self.screen, self.theme_index, self.small_font)
             pygame.display.update()
             clock.tick(60)
 
