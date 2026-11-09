@@ -1,3 +1,6 @@
+import random
+
+
 class Board:
     """Manages Peg Solitaire game logic board state, layout generation, move validation, and win/loss"""
 
@@ -213,3 +216,26 @@ class Board:
                 if self.board[row][col] == "PEG":
                     peg_count += 1
         return peg_count
+
+    # Sprint 3
+
+    # Automatic Random moves
+    def select_random_move(self):
+        """Gets a list of all valid moves from all pegs and randomly selects one"""
+        valid_moves = []
+        for row in range(self.size):
+            for col in range(self.size):
+                # For pegs
+                if self.board[row][col] == "PEG":
+                    # Make it our starting position
+                    start_pos = (row, col)
+                    # Add all of its legal moves to our valid moves list
+                    for end_pos in self.get_legal_moves(start_pos):
+                        valid_moves.append(end_pos)
+
+        # Return none if empty
+        if not valid_moves:
+            return None
+
+        # Return a random move from valid moves
+        return random.choice(valid_moves)
