@@ -5,6 +5,7 @@ import pygame
 
 import components
 import board
+import sound_manager
 
 pygame.init()
 
@@ -27,9 +28,32 @@ class PegSolitaireApp:
         """Initializes Pygame Window, window caption, font assetss, and eventually themes"""
         # Create screen
         self.screen = pygame.display.set_mode((1280, 720))
-        pygame.display.set_caption("Peg Solitaire - Menu")
+        pygame.display.set_caption("Peg Solitaire")
 
         # Load Themes
+
+        # === Audio ===
+        # Load Audio
+        self.sound_manager = sound_manager.SoundManager(
+            "mondamusic-retro-arcade-game-music-512837.mp3"
+        )
+        # Icons for audio
+        icon_size = (32, 32)
+        vol_path = os.path.join(SCRIPT_DIR, "images", "volume.png")
+        muted_path = os.path.join(SCRIPT_DIR, "images", "muted.png")
+        try:
+            self.volume_img = pygame.transform.scale(
+                pygame.image.load(vol_path).convert_alpha(), icon_size
+            )
+            self.muted_img = pygame.transform.scale(
+                pygame.image.load(muted_path).convert_alpha(), icon_size
+            )
+        except Exception as e:
+            print(f"Warning: Could not load audio icons: {e}")
+            self.volume_img = None
+            self.muted_img = None
+        # Instantiate
+        self.audio_button = components.AudioButton(1170, 635, 60, 50)
 
         # Scale Background Images
 
@@ -70,6 +94,12 @@ class PegSolitaireApp:
             # Draw buttons
             play_button.draw(self.screen, mouse_pos)
             close_button.draw(self.screen, mouse_pos)
+            self.audio_button.draw(
+                self.screen,
+                self.sound_manager.music_enabled,
+                self.volume_img,
+                self.muted_img,
+            )
 
             # Event loop
             for event in pygame.event.get():
@@ -84,6 +114,9 @@ class PegSolitaireApp:
                     elif close_button.check_click(event.pos):
                         pygame.quit()
                         sys.exit()
+                    # Audio button
+                    elif self.audio_button.check_click(event.pos):
+                        self.sound_manager.toggle_music()
 
             pygame.display.update()
             clock.tick(60)
@@ -118,6 +151,7 @@ class PegSolitaireApp:
             components.RadioButton(770, 500, 10, "Large (9x9)", 9, self.small_font),
         ]
 
+        # Draw
         while True:
             # Fill screen and mouse pos
             self.screen.fill((30, 30, 30))
@@ -154,6 +188,14 @@ class PegSolitaireApp:
             back_button.draw(self.screen, mouse_pos)
             start_game_button.draw(self.screen, mouse_pos)
 
+            # Draw Audio
+            self.audio_button.draw(
+                self.screen,
+                self.sound_manager.music_enabled,
+                self.volume_img,
+                self.muted_img,
+            )
+
             # Event Loop
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -168,6 +210,10 @@ class PegSolitaireApp:
                     # Star Game Button
                     elif start_game_button.check_click(mouse_pos):
                         self.game_screen(selected_board_type, selected_board_size)
+
+                    # Audio button
+                    elif self.audio_button.check_click(event.pos):
+                        self.sound_manager.toggle_music()
 
                     # Check for clicks on board type buttons
                     for btn in board_type_buttons:
@@ -213,6 +259,8 @@ class PegSolitaireApp:
         random_layout_button = components.MenuButton(
             "RANDOM LAYOUT", self.small_font, "White", "Yellow", (1085, 455)
         )
+
+        # Draw
         while True:
             self.screen.fill((30, 30, 30))
             mouse_pos = pygame.mouse.get_pos()
@@ -226,6 +274,14 @@ class PegSolitaireApp:
             # Center grid on 1280x720 screen
             start_x = (1280 - grid_width) // 2
             start_y = (720 - grid_height) // 2
+
+            # Draw audio
+            self.audio_button.draw(
+                self.screen,
+                self.sound_manager.music_enabled,
+                self.volume_img,
+                self.muted_img,
+            )
 
             # Check for win/loss each fram
             if game_over_text is None:
@@ -381,6 +437,10 @@ class PegSolitaireApp:
                         game_over_text = None
                         message_text = None
                         continue
+
+                    # Audio
+                    elif self.audio_button.check_click(event.pos):
+                        self.sound_manager.toggle_music()
 
                     # Buttons for when game is off
                     if game_over_text is None:

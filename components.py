@@ -56,3 +56,29 @@ class RadioButton:
     def check_click(self, mouse_pos):
         """Returns True if mouse_pos is inside the radio button's circle."""
         return pygame.Vector2(mouse_pos).distance_to(self.center) <= self.radius
+
+
+class AudioButton:
+    """A persistent button that toggles and displays music audio state with custom icons."""
+
+    def __init__(self, x, y, width, height):
+        self.rect = pygame.Rect(x, y, width, height)
+
+    def draw(self, surface, is_enabled, volume_img, muted_img):
+        # Determine border color: green if on, red if off
+        border_color = (0, 255, 0) if is_enabled else (255, 0, 0)
+
+        # Draw white background box
+        pygame.draw.rect(surface, (255, 255, 255), self.rect)
+        # Draw colored border (thickness of 3 pixels)
+        pygame.draw.rect(surface, border_color, self.rect, 3)
+
+        # Draw the corresponding icon in the center
+        current_icon = volume_img if is_enabled else muted_img
+        if current_icon:
+            icon_rect = current_icon.get_rect(center=self.rect.center)
+            surface.blit(current_icon, icon_rect)
+
+    def check_click(self, mouse_pos):
+        """Returns True if the button was clicked."""
+        return self.rect.collidepoint(mouse_pos)
