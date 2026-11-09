@@ -239,3 +239,14 @@ class Board:
 
         # Return a random move from valid moves
         return random.choice(valid_moves)
+
+    def make_automated_move(self, move=None):
+        """Executes an automated move"""
+        if move is None:
+            move = self.select_random_move()
+
+        if move:
+            start_pos, end_pos = move
+            self.make_move(move)
+
+        return move
