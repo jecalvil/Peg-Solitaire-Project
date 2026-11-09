@@ -190,6 +190,12 @@ class PegSolitaireApp:
         game_over_text = None
         message_text = None
 
+        # Automated move variables
+        autoplay_enabled = False
+        last_auto_move_time = 0
+        AUTO_MOVE_DELAY = 500
+        pending_auto_move = None
+
         # Back Button
         back_button = components.MenuButton(
             "BACK", self.small_font, "White", "Yellow", (100, 50)
@@ -210,6 +216,7 @@ class PegSolitaireApp:
         while True:
             self.screen.fill((30, 30, 30))
             mouse_pos = pygame.mouse.get_pos()
+            current_time = pygame.time.get_ticks()
 
             box_size = 500  # fixeed box size play area
             cell_size = box_size // size
@@ -224,8 +231,39 @@ class PegSolitaireApp:
             if game_over_text is None:
                 if game_board.check_win():
                     game_over_text = "YOU WON!"
+                    autoplay_enabled = False
+                    autoplay_button.update_text("AUTOPLAY: OFF")
                 elif not game_board.game_over_check():
                     game_over_text = "GAME OVER"
+                    autoplay_enabled = False
+                    autoplay_button.update_text("AUTOPLAY: OFF")
+
+            # Autoplay functionality
+            if autoplay_enabled and game_over_text is None:
+                if current_time - last_auto_move_time > AUTO_MOVE_DELAY:
+
+                    # Ask board for a move to highlight it
+                    if pending_auto_move is None:
+                        # select a move
+                        pending_auto_move = game_board.select_random_move()
+                        if pending_auto_move:
+                            # select that peg
+                            selected_peg = pending_auto_move[0]
+                        else:
+                            # no moves
+                            autoplay_enabled = False
+                            autoplay_button.update_text("AUTOPLAY: OFF")
+                            selected_peg = None
+
+                    # Pass move back to the board to execute it
+                    else:
+                        game_board.make_automated_move(pending_auto_move)
+                        # remove selected peg highlight
+                        selected_peg = None
+                        # reset pending move
+                        pending_auto_move = None
+
+                    last_auto_move_time = current_time
 
             # Determine title text based on state
             title_text = game_over_text if game_over_text else "PEG SOLITAIRE"
@@ -343,6 +381,22 @@ class PegSolitaireApp:
                         game_over_text = None
                         message_text = None
                         continue
+
+                    # Buttons for when game is off
+                    if game_over_text is None:
+                        # Automated play button
+                        if autoplay_button.check_click(event.pos):
+                            # toggle
+                            autoplay_enabled = not autoplay_enabled
+                            # update text
+                            if autoplay_enabled:
+                                autoplay_button.update_text("AUTOPLAY: ON")
+                            else:
+                                autoplay_button.update_text("AUTOPLAY: OFF")
+
+                        # Shuffle Pegs Button
+
+                        # Random Layout Button
 
                     # Make sure grid clicks only active when game is not over
                     if game_over_text is not None:

@@ -231,7 +231,7 @@ class Board:
                     start_pos = (row, col)
                     # Add all of its legal moves to our valid moves list
                     for end_pos in self.get_legal_moves(start_pos):
-                        valid_moves.append(end_pos)
+                        valid_moves.append((start_pos, end_pos))
 
         # Return none if empty
         if not valid_moves:
@@ -247,6 +247,6 @@ class Board:
 
         if move:
             start_pos, end_pos = move
-            self.make_move(move)
+            self.make_move(start_pos, end_pos)
 
         return move
