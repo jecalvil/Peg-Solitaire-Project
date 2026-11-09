@@ -198,7 +198,15 @@ class PegSolitaireApp:
         restart_button = components.MenuButton(
             "RESTART", self.small_font, "White", "Yellow", (1180, 50)
         )
-
+        autoplay_button = components.MenuButton(
+            "AUTOPLAY: OFF", self.small_font, "White", "Yellow", (1085, 350)
+        )
+        shuffle_button = components.MenuButton(
+            "SHUFFLE PEGS", self.small_font, "White", "Yellow", (1085, 405)
+        )
+        random_layout_button = components.MenuButton(
+            "RANDOM LAYOUT", self.small_font, "White", "Yellow", (1085, 455)
+        )
         while True:
             self.screen.fill((30, 30, 30))
             mouse_pos = pygame.mouse.get_pos()
@@ -311,6 +319,11 @@ class PegSolitaireApp:
             # Draw the Navigation buttons
             back_button.draw(self.screen, mouse_pos)
             restart_button.draw(self.screen, mouse_pos)
+            # Draw Autoplay, Shuffle, Randomize if game is not over
+            if game_over_text is None:
+                autoplay_button.draw(self.screen, mouse_pos)
+                shuffle_button.draw(self.screen, mouse_pos)
+                random_layout_button.draw(self.screen, mouse_pos)
 
             # Event Loop
             for event in pygame.event.get():
