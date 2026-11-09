@@ -403,6 +403,12 @@ class PegSolitaireApp:
                             message_text = None
 
                         # Random Layout Button
+                        if random_layout_button.check_click(event.pos):
+                            game_board.randomize_layout()
+                            # Deselect anything if selected
+                            selected_peg = None
+                            pending_auto_move = None
+                            message_text = None
 
                     # Make sure grid clicks only active when game is not over
                     if game_over_text is not None:

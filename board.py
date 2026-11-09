@@ -289,3 +289,20 @@ class Board:
             row, col = playable_positions[i]
             # Set that peg value to the new randomized value at the same index in pieces
             self.board[col][row] = pieces[i]
+
+    # Randomize layout
+    def randomize_layout(self):
+        """Generates a completely new game (random pegs and empty spaces) on the same board"""
+        playable_positions = self.get_non_invalid_moves()
+
+        # Shuffle board
+        # We are shuffling so the peg we set empty is also random
+        random.shuffle(playable_positions)
+        # Set a random peg to random to make sure its playable still
+        empty_pos_row, empty_pos_col = playable_positions[0]
+        self.board[empty_pos_row][empty_pos_col] = "EMPTY"
+
+        # Randomly fill the remaining positions
+        for i in range(1, len(playable_positions)):
+            row, col = playable_positions[i]
+            self.board[row][col] = random.choice(["PEG", "EMPTY"])
