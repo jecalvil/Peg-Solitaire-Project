@@ -281,6 +281,10 @@ class PegSolitaireApp:
         last_auto_move_time = 0
         AUTO_MOVE_DELAY = 500
         pending_auto_move = None
+        # Replay Variables
+        replay_queue = []
+        last_replay_time = 0
+        REPLAY_DELAY = 500
 
         # Record moves
         self.action_history = []
@@ -347,7 +351,7 @@ class PegSolitaireApp:
                     self.hint_active = False
 
             # Check for win/loss each fram
-            if game_over_text is None:
+            if game_over_text is None and not replay_queue:
                 if game_board.check_win():
                     game_over_text = "YOU WON!"
                     autoplay_enabled = False
@@ -357,6 +361,17 @@ class PegSolitaireApp:
                     autoplay_enabled = False
                     autoplay_button.update_text("AUTOPLAY: OFF")
 
+            # Step-by-step replay of a loaded game
+            if replay_queue and current_time - last_replay_time > REPLAY_DELAY:
+                action = replay_queue.pop(0)
+                if action.get("type") == "move":
+                    game_board.make_move(action["from"], action["to"])
+                elif action.get("type") in ["shuffle", "randomize"]:
+                    game_board.board = copy.deepcopy(action["grid_snapshot"])
+                self.action_history.append(action)
+                last_replay_time = current_time
+                if not replay_queue:
+                    message_text = "REPLAY FINISHED"
             # Autoplay functionality
             if autoplay_enabled and game_over_text is None:
                 if current_time - last_auto_move_time > AUTO_MOVE_DELAY:
@@ -495,11 +510,12 @@ class PegSolitaireApp:
             # Draw the Navigation buttons
             back_button.draw(self.screen, mouse_pos)
             restart_button.draw(self.screen, mouse_pos)
-            save_game_button.draw(self.screen, mouse_pos)
-            load_game_button.draw(self.screen, mouse_pos)
+            if not replay_queue:
+                save_game_button.draw(self.screen, mouse_pos)
+                load_game_button.draw(self.screen, mouse_pos)
 
             # Draw Autoplay, Shuffle, Randomize if game is not over
-            if game_over_text is None:
+            if game_over_text is None and not replay_queue:
                 autoplay_button.draw(self.screen, mouse_pos)
                 shuffle_button.draw(self.screen, mouse_pos)
                 random_layout_button.draw(self.screen, mouse_pos)
@@ -513,15 +529,17 @@ class PegSolitaireApp:
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:  # Button clicks
                     # Back button
-                    if back_button.check_click(event.pos):
+                    if back_button.check_click(event.pos) and not replay_queue:
                         return
 
                     # Restart button
-                    if restart_button.check_click(event.pos):
+                    if restart_button.check_click(event.pos) and not replay_queue:
                         game_board = board.Board(board_type, size)
                         selected_peg = None
                         game_over_text = None
                         message_text = None
+                        self.action_history = []
+                        replay_queue = []
                         continue
 
                     # Audio
@@ -534,7 +552,7 @@ class PegSolitaireApp:
                             self.theme_index = (self.theme_index + 1) % len(self.themes)
 
                     # Save game
-                    if save_game_button.check_click(event.pos):
+                    if save_game_button.check_click(event.pos) and not replay_queue:
                         try:
                             GameLogger.save_game(board_type, size, self.action_history)
                             message_text = "GAME SAVED TO /saved_games!"
@@ -543,7 +561,7 @@ class PegSolitaireApp:
                             print(f"CRITICAL SAVE ERROR: {e}")
 
                     # Load Game
-                    if load_game_button.check_click(event.pos):
+                    if load_game_button.check_click(event.pos) and not replay_queue:
                         # try to open the folder/filepath
                         try:
                             # directory
@@ -572,15 +590,16 @@ class PegSolitaireApp:
 
                                 # Re-initialize board and replay action history
                                 game_board = board.Board(board_type, size)
-
-                                for action in self.action_history:
-                                    if action.get("type") == "move":
-                                        game_board.make_move(
-                                            action["from"], action["to"]
-                                        )
-                                    elif action.get("type") in ["shuffle", "randomize"]:
-                                        # Directly restore the saved mid-game grid snapshot!
-                                        game_board.board = action["grid_snapshot"]
+                                replay_queue = list(loaded_data["action_history"])
+                                self.action_history = (
+                                    []
+                                )  # refilled as each action is replayed
+                                autoplay_enabled = False
+                                autoplay_button.update_text("AUTOPLAY: OFF")
+                                pending_auto_move = None
+                                selected_peg = None
+                                game_over_text = None
+                                message_text = "REPLAYING SAVED GAME..."
 
                                 selected_peg = None
                                 game_over_text = None
@@ -590,9 +609,9 @@ class PegSolitaireApp:
                             print(f"CRITICAL LOAD ERROR: {e}")
 
                     # Buttons for when game is off
-                    if game_over_text is None:
+                    if game_over_text is None or replay_queue:
                         # Automated play button
-                        if autoplay_button.check_click(event.pos):
+                        if autoplay_button.check_click(event.pos) and not replay_queue:
                             # toggle
                             autoplay_enabled = not autoplay_enabled
                             # update text
@@ -602,7 +621,7 @@ class PegSolitaireApp:
                                 autoplay_button.update_text("AUTOPLAY: OFF")
 
                         # Shuffle Pegs Button
-                        if shuffle_button.check_click(event.pos):
+                        if shuffle_button.check_click(event.pos) and not replay_queue:
                             game_board.shuffle_board()
                             # Record shuffle event with a grid snapshot
                             self.action_history.append(
@@ -617,7 +636,10 @@ class PegSolitaireApp:
                             message_text = None
 
                         # Random Layout Button
-                        if random_layout_button.check_click(event.pos):
+                        if (
+                            random_layout_button.check_click(event.pos)
+                            and not replay_queue
+                        ):
                             game_board.randomize_layout()
                             # Record randomize event with a grid snapshot
                             self.action_history.append(
@@ -659,7 +681,11 @@ class PegSolitaireApp:
                                 )
 
                     # Make sure grid clicks only active when game is not over
-                    if game_over_text is not None:
+                    if game_over_text is not None and not replay_queue:
+                        continue
+
+                    # Block manual clicks while autoplay
+                    if autoplay_enabled:
                         continue
 
                     # Grid click

@@ -1,6 +1,9 @@
+import json
+import os
 import unittest
 
 from board import Board
+from game_logger import GameLogger
 
 
 # Helper funcitons
@@ -407,6 +410,106 @@ class TestWinningPlaythrough(unittest.TestCase):
         self.assertTrue(game.check_win())
         self.assertFalse(game.game_over_check())
         self.assertEqual(game.get_rating(), "Rating: Outstanding (1 marble left)")
+
+
+# Sprint 3
+class TestAutomatedMoves(unittest.TestCase):
+    """Unit test for testing automatic move selection, execution, and automated game flow"""
+
+    def test_selected_random_move_is_valid(self):
+        game = Board("English", 7)
+        move = game.select_random_move()
+        self.assertIsNotNone(move)  # check if a move was selected
+        start, end = move
+        self.assertTrue(
+            game.is_valid_move(start, end)
+        )  # check if that random move is valid
+
+    def test_automated_move_updates_board(self):
+        game = Board("Hexagon", 9)
+        initial_pegs = game.count_pegs()
+
+        move = game.make_automated_move()
+        self.assertIsNotNone(move)
+        self.assertEqual(game.count_pegs(), initial_pegs - 1)
+
+    def test_automated_game_loop_until_over(self):
+        """Verifies that an automated game can loop until no more moves remain or win condition is met."""
+        game = Board("Diamond", 5)
+        max_moves = 50
+        move_count = 0
+
+        while game.game_over_check() and move_count < max_moves:
+            move = game.make_automated_move()
+            self.assertIsNotNone(move)
+            move_count += 1
+
+        # The game should have terminated via game over or win
+        self.assertFalse(game.game_over_check())
+
+
+class TestGamePersistence(unittest.TestCase):
+    """Unit tests for saving, loading, and replaying game action history and grid snapshots."""
+
+    def setUp(self):
+        """Set up a temporary test save file path."""
+        self.test_filename = "test_persistence_temp.json"
+        self.test_filepath = os.path.join("saved_games", self.test_filename)
+
+    def tearDown(self):
+        """Clean up temporary files after each test."""
+        if os.path.exists(self.test_filepath):
+            os.remove(self.test_filepath)
+
+    def test_save_game_creates_valid_json(self):
+        """Verifies that save_game correctly writes board type, size, and action history to a JSON file."""
+        action_history = [{"type": "move", "from": [1, 3], "to": [3, 3]}]
+        saved_path = GameLogger.save_game(
+            "English", 7, action_history, custom_filename=self.test_filename
+        )
+
+        self.assertTrue(os.path.exists(saved_path))
+        with open(saved_path, "r") as f:
+            data = json.load(f)
+
+        self.assertEqual(data["board_type"], "English")
+        self.assertEqual(data["size"], 7)
+        self.assertEqual(len(data["action_history"]), 1)
+
+    def test_load_game_restores_action_history_and_tuples(self):
+        """Verifies that load_game reads back files and correctly parses coordinate lists back into tuples."""
+        action_history = [{"type": "move", "from": (1, 3), "to": (3, 3)}]
+        GameLogger.save_game(
+            "Diamond", 5, action_history, custom_filename=self.test_filename
+        )
+
+        loaded_data = GameLogger.load_game(self.test_filepath)
+
+        self.assertEqual(loaded_data["board_type"], "Diamond")
+        self.assertEqual(loaded_data["size"], 5)
+        self.assertEqual(loaded_data["action_history"][0]["from"], (1, 3))
+        self.assertEqual(loaded_data["action_history"][0]["to"], (3, 3))
+
+    def test_replay_with_shuffle_and_randomize_snapshots(self):
+        """Verifies that replaying a game action history with mid-game shuffle/randomize snapshots restores the grid."""
+        game = Board("Hexagon", 7)
+
+        # Perform a shuffle and capture snapshot
+        game.shuffle_board()
+        snapshot_grid = [row[:] for row in game.board]
+
+        actions = [{"type": "shuffle", "grid_snapshot": snapshot_grid}]
+
+        GameLogger.save_game("Hexagon", 7, actions, custom_filename=self.test_filename)
+        loaded_data = GameLogger.load_game(self.test_filepath)
+
+        # Re-initialize board and replay action history
+        replayed_board = Board(loaded_data["board_type"], loaded_data["size"])
+        for action in loaded_data["action_history"]:
+            if action.get("type") in ["shuffle", "randomize"]:
+                replayed_board.board = action["grid_snapshot"]
+
+        self.assertEqual(replayed_board.board, snapshot_grid)
 
 
 # =========== Run the tests=================

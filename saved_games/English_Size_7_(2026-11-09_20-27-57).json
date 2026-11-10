@@ -1,0 +1,140 @@
+{
+    "board_type": "English",
+    "size": 7,
+    "action_history": [
+        {
+            "type": "move",
+            "from": [
+                5,
+                3
+            ],
+            "to": [
+                3,
+                3
+            ]
+        },
+        {
+            "type": "move",
+            "from": [
+                2,
+                3
+            ],
+            "to": [
+                4,
+                3
+            ]
+        },
+        {
+            "type": "move",
+            "from": [
+                3,
+                1
+            ],
+            "to": [
+                3,
+                3
+            ]
+        },
+        {
+            "type": "move",
+            "from": [
+                0,
+                3
+            ],
+            "to": [
+                2,
+                3
+            ]
+        },
+        {
+            "type": "shuffle",
+            "grid_snapshot": [
+                [
+                    "INVALID",
+                    "INVALID",
+                    "EMPTY",
+                    "PEG",
+                    "PEG",
+                    "INVALID",
+                    "INVALID"
+                ],
+                [
+                    "INVALID",
+                    "INVALID",
+                    "EMPTY",
+                    "EMPTY",
+                    "PEG",
+                    "INVALID",
+                    "INVALID"
+                ],
+                [
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "EMPTY",
+                    "PEG"
+                ],
+                [
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "EMPTY",
+                    "PEG",
+                    "PEG"
+                ],
+                [
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "PEG"
+                ],
+                [
+                    "INVALID",
+                    "INVALID",
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "INVALID",
+                    "INVALID"
+                ],
+                [
+                    "INVALID",
+                    "INVALID",
+                    "PEG",
+                    "PEG",
+                    "PEG",
+                    "INVALID",
+                    "INVALID"
+                ]
+            ]
+        },
+        {
+            "type": "move",
+            "from": [
+                5,
+                2
+            ],
+            "to": [
+                3,
+                4
+            ]
+        },
+        {
+            "type": "move",
+            "from": [
+                3,
+                4
+            ],
+            "to": [
+                1,
+                2
+            ]
+        }
+    ]
+}
