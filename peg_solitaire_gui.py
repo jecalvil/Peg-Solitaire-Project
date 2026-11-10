@@ -1,10 +1,14 @@
 import os
 import sys
+import copy
 
 import pygame
+import tkinter as tk
+from tkinter import filedialog
 
-import components
 import board
+import components
+from game_logger import GameLogger
 import sound_manager
 
 pygame.init()
@@ -278,6 +282,9 @@ class PegSolitaireApp:
         AUTO_MOVE_DELAY = 500
         pending_auto_move = None
 
+        # Record moves
+        self.action_history = []
+
         # Back Button
         back_button = components.MenuButton(
             "BACK", self.small_font, "White", "Yellow", (100, 50)
@@ -294,6 +301,14 @@ class PegSolitaireApp:
         )
         random_layout_button = components.MenuButton(
             "RANDOM LAYOUT", self.small_font, "White", "Yellow", (1085, 455)
+        )
+        # Save Game Button
+        save_game_button = components.MenuButton(
+            "SAVE GAME", self.small_font, "White", "Yellow", (1085, 300)
+        )
+        # Load Game Button
+        load_game_button = components.MenuButton(
+            "LOAD GAME", self.small_font, "White", "Yellow", (1085, 250)
         )
         # Hint button
         hint_button = components.HintButton(1010, 510, 150, 45)
@@ -362,6 +377,14 @@ class PegSolitaireApp:
                     # Pass move back to the board to execute it
                     else:
                         game_board.make_automated_move(pending_auto_move)
+                        # Fix for bug: needs to record automated moves too
+                        self.action_history.append(
+                            {
+                                "type": "move",
+                                "from": pending_auto_move[0],
+                                "to": pending_auto_move[1],
+                            }
+                        )
                         # remove selected peg highlight
                         selected_peg = None
                         # reset pending move
@@ -464,7 +487,7 @@ class PegSolitaireApp:
                             )
 
             # Display message (illegal move, no moves available)
-            if message_text and game_over_text is None:
+            if message_text:
                 message_surface = self.small_font.render(message_text, True, "Red")
                 message_rect = message_surface.get_rect(center=(640, 670))
                 self.screen.blit(message_surface, message_rect)
@@ -472,6 +495,9 @@ class PegSolitaireApp:
             # Draw the Navigation buttons
             back_button.draw(self.screen, mouse_pos)
             restart_button.draw(self.screen, mouse_pos)
+            save_game_button.draw(self.screen, mouse_pos)
+            load_game_button.draw(self.screen, mouse_pos)
+
             # Draw Autoplay, Shuffle, Randomize if game is not over
             if game_over_text is None:
                 autoplay_button.draw(self.screen, mouse_pos)
@@ -507,6 +533,62 @@ class PegSolitaireApp:
                         if self.themes:
                             self.theme_index = (self.theme_index + 1) % len(self.themes)
 
+                    # Save game
+                    if save_game_button.check_click(event.pos):
+                        try:
+                            GameLogger.save_game(board_type, size, self.action_history)
+                            message_text = "GAME SAVED TO /saved_games!"
+                        except Exception as e:
+                            message_text = "ERROR SAVING GAME"
+                            print(f"CRITICAL SAVE ERROR: {e}")
+
+                    # Load Game
+                    if load_game_button.check_click(event.pos):
+                        # try to open the folder/filepath
+                        try:
+                            # directory
+                            saved_dir = os.path.abspath("saved_games")
+                            os.makedirs(saved_dir, exist_ok=True)
+
+                            # open fial dialog over pygame
+                            root = tk.Tk()
+                            root.withdraw()
+                            root.attributes("-topmost", True)
+
+                            file_path = filedialog.askopenfilename(
+                                initialdir=saved_dir,
+                                title="Select a Saved Game",
+                                filetypes=[
+                                    ("JSON Files", "*.json"),
+                                    ("All Files", "*.*"),
+                                ],
+                            )
+
+                            if file_path:
+                                loaded_data = GameLogger.load_game(file_path)
+                                board_type = loaded_data["board_type"]
+                                size = loaded_data["size"]
+                                self.action_history = loaded_data["action_history"]
+
+                                # Re-initialize board and replay action history
+                                game_board = board.Board(board_type, size)
+
+                                for action in self.action_history:
+                                    if action.get("type") == "move":
+                                        game_board.make_move(
+                                            action["from"], action["to"]
+                                        )
+                                    elif action.get("type") in ["shuffle", "randomize"]:
+                                        # Directly restore the saved mid-game grid snapshot!
+                                        game_board.board = action["grid_snapshot"]
+
+                                selected_peg = None
+                                game_over_text = None
+                                message_text = "GAME LOADED SUCCESSFULLY!"
+                        except Exception as e:
+                            message_text = "ERROR LOADING GAME"
+                            print(f"CRITICAL LOAD ERROR: {e}")
+
                     # Buttons for when game is off
                     if game_over_text is None:
                         # Automated play button
@@ -522,6 +604,13 @@ class PegSolitaireApp:
                         # Shuffle Pegs Button
                         if shuffle_button.check_click(event.pos):
                             game_board.shuffle_board()
+                            # Record shuffle event with a grid snapshot
+                            self.action_history.append(
+                                {
+                                    "type": "shuffle",
+                                    "grid_snapshot": copy.deepcopy(game_board.board),
+                                }
+                            )
                             # Deselect anything if selected
                             selected_peg = None
                             pending_auto_move = None
@@ -530,6 +619,13 @@ class PegSolitaireApp:
                         # Random Layout Button
                         if random_layout_button.check_click(event.pos):
                             game_board.randomize_layout()
+                            # Record randomize event with a grid snapshot
+                            self.action_history.append(
+                                {
+                                    "type": "randomize",
+                                    "grid_snapshot": copy.deepcopy(game_board.board),
+                                }
+                            )
                             # Deselect anything if selected
                             selected_peg = None
                             pending_auto_move = None
@@ -611,6 +707,13 @@ class PegSolitaireApp:
                                     if game_board.make_move(
                                         selected_peg, (clicked_row, clicked_col)
                                     ):
+                                        self.action_history.append(
+                                            {
+                                                "type": "move",
+                                                "from": selected_peg,
+                                                "to": (clicked_row, clicked_col),
+                                            }
+                                        )
                                         selected_peg = (
                                             None  # Deselect peg after move is made
                                         )
