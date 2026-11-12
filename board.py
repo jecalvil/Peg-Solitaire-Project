@@ -1,4 +1,5 @@
 import random
+import copy
 
 
 class Board:
@@ -54,6 +55,17 @@ class Board:
         # make the center empty (sizes are 5, 7, and 9)
         center_pos = size // 2
         self.board[center_pos][center_pos] = "EMPTY"
+
+    # Mutator method - implemented as suggested by the LLM analysis
+    def set_board_grid(self, grid_snapshot):
+        """Mutator method to update or restore the board grid state."""
+        self.board = copy.deepcopy(grid_snapshot)
+
+    def get_cell(self, row, col):
+        """Accessor method to retrieve the state of a specific cell."""
+        return self.board[row][col]
+
+    # ===================================================================
 
     def is_english_corner(self, row, col):
         """Determines if a given grid coordinates falls within an invalid corner for an English Style board"""

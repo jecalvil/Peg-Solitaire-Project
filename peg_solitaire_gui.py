@@ -367,7 +367,9 @@ class PegSolitaireApp:
                 if action.get("type") == "move":
                     game_board.make_move(action["from"], action["to"])
                 elif action.get("type") in ["shuffle", "randomize"]:
-                    game_board.board = copy.deepcopy(action["grid_snapshot"])
+                    game_board.set_board_grid(
+                        action["grid_snapshot"]
+                    )  # Adjusted based on LLM feedback
                 self.action_history.append(action)
                 last_replay_time = current_time
                 if not replay_queue:
@@ -449,7 +451,9 @@ class PegSolitaireApp:
             # Draw Board Grid
             for row in range(size):
                 for col in range(size):
-                    cell_type = game_board.board[row][col]
+                    cell_type = game_board.get_cell(
+                        row, col
+                    )  # changed based on LLM feedback
 
                     # Box for each cell
                     rect = pygame.Rect(
@@ -666,9 +670,9 @@ class PegSolitaireApp:
                             movable_pegs = []
                             for r in range(size):
                                 for c in range(size):
-                                    if game_board.board[r][
-                                        c
-                                    ] == "PEG" and game_board.get_legal_moves((r, c)):
+                                    if game_board.get_cell(
+                                        r, c
+                                    ) == "PEG" and game_board.get_legal_moves((r, c)):
                                         movable_pegs.append((r, c))
 
                             if not movable_pegs:
@@ -702,7 +706,9 @@ class PegSolitaireApp:
                             clicked_row >= 0 and clicked_row < size
                         ):
                             # Select our corresponding gui cell to logi
-                            cell_value = game_board.board[clicked_row][clicked_col]
+                            cell_value = game_board.get_cell(
+                                clicked_row, clicked_col
+                            )  # adjusted based on feedback
 
                             # Selection and De-selection
                             if cell_value == "PEG":
@@ -718,7 +724,7 @@ class PegSolitaireApp:
                                     selected_peg = (
                                         clicked_row,
                                         clicked_col,
-                                    )  # new peg, select it
+                                    )  # new peg, select it2
                                     message_text = None
                                 else:
                                     # peg with no legal jumps, nothing is selected

@@ -219,8 +219,10 @@ class TestNewGame(unittest.TestCase):
 
 
 # ================================CHATGPT Unit Tests=====================
-# Story 4 - make a move =================
-class TestMakeMove(unittest.TestCase):
+# Story 4 - make a move ================= manual
+class TestMakeMove(
+    unittest.TestCase
+):  # *********************************************************
     """Unit tests for validating peg selection and move execution"""
 
     # AC 4.1: Selecting a peg that has a legal move.
@@ -235,7 +237,9 @@ class TestMakeMove(unittest.TestCase):
         )  # check whether this move which is legal is within the legal moves
 
     # AC 4.2: Making a valid jump. # modified to include a diagonal jump as well
-    def test_ac_4_2_valid_jump_updates_board(self):
+    def test_ac_4_2_valid_jump_updates_board(
+        self,
+    ):  # ***********************************************
         """Verifies that executing a valid orthogonal or diagonal jump correctly updates board state and peg counts."""
         # Test orthogonal jump (English board)
         game_ortho = make_custom_board(9, [(4, 2), (4, 3)], board_type="English")
@@ -244,10 +248,12 @@ class TestMakeMove(unittest.TestCase):
         result_ortho = game_ortho.make_move((4, 2), (4, 4))
 
         self.assertTrue(result_ortho)
-        self.assertEqual(game_ortho.board[4][2], "EMPTY")
-        self.assertEqual(game_ortho.board[4][3], "EMPTY")
-        self.assertEqual(game_ortho.board[4][4], "PEG")
-        self.assertEqual(game_ortho.count_pegs(), initial_peg_count - 1)
+        self.assertEqual(game_ortho.board[4][2], "EMPTY")  # starting pos now empty
+        self.assertEqual(game_ortho.board[4][3], "EMPTY")  # uumped over pos now empty
+        self.assertEqual(game_ortho.board[4][4], "PEG")  # final spot now has peg
+        self.assertEqual(
+            game_ortho.count_pegs(), initial_peg_count - 1
+        )  # total peg count is now one less
 
         # Test diagonal jump (Hexagon board)
         game_diag = make_custom_board(9, [(2, 2), (3, 3)], board_type="Hexagon")
@@ -310,7 +316,7 @@ class TestGameOver(unittest.TestCase):
         """Verifies game state evaluation when no legal moves remain."""
         game = make_custom_board(9, [(0, 4), (4, 0)])
 
-        self.assertFalse(game.game_over_check())
+        self.assertFalse(game.game_over_check())  # making sure no legal moves left
         self.assertFalse(game.check_win())
         self.assertEqual(game.count_pegs(), 2)
         self.assertEqual(game.get_rating(), "Rating: Very Good (2 marbles left)")
@@ -320,13 +326,17 @@ class TestGameOver(unittest.TestCase):
         """Verifies that leaving exactly one peg results in a win and outstanding rating."""
         game = make_custom_board(9, [(4, 2), (4, 3)])
 
-        result = game.make_move((4, 2), (4, 4))
+        result = game.make_move(
+            (4, 2), (4, 4)
+        )  # make a move that would leave one peg remaining
 
         self.assertTrue(result)
-        self.assertEqual(game.count_pegs(), 1)
-        self.assertTrue(game.check_win())
+        self.assertEqual(game.count_pegs(), 1)  # check peg count
+        self.assertTrue(game.check_win())  # check win/gameover
         self.assertFalse(game.game_over_check())
-        self.assertEqual(game.get_rating(), "Rating: Outstanding (1 marble left)")
+        self.assertEqual(
+            game.get_rating(), "Rating: Outstanding (1 marble left)"
+        )  # check rating
 
     # AC 5.3: Game continues while legal moves exist.
     def test_ac_5_3_game_continues_when_legal_moves_remain(self):
@@ -413,10 +423,14 @@ class TestWinningPlaythrough(unittest.TestCase):
 
 
 # Sprint 3
-class TestAutomatedMoves(unittest.TestCase):
+class TestAutomatedMoves(
+    unittest.TestCase
+):  # *************************************************************
     """Unit test for testing automatic move selection, execution, and automated game flow"""
 
-    def test_selected_random_move_is_valid(self):
+    def test_selected_random_move_is_valid(
+        self,
+    ):  # checks whether an anticipated move is valid
         game = Board("English", 7)
         move = game.select_random_move()
         self.assertIsNotNone(move)  # check if a move was selected
@@ -425,7 +439,7 @@ class TestAutomatedMoves(unittest.TestCase):
             game.is_valid_move(start, end)
         )  # check if that random move is valid
 
-    def test_automated_move_updates_board(self):
+    def test_automated_move_updates_board(self):  # actually makes a move
         game = Board("Hexagon", 9)
         initial_pegs = game.count_pegs()
 
@@ -433,7 +447,9 @@ class TestAutomatedMoves(unittest.TestCase):
         self.assertIsNotNone(move)
         self.assertEqual(game.count_pegs(), initial_pegs - 1)
 
-    def test_automated_game_loop_until_over(self):
+    def test_automated_game_loop_until_over(
+        self,
+    ):  # play it through to make sure it can reach the end
         """Verifies that an automated game can loop until no more moves remain or win condition is met."""
         game = Board("Diamond", 5)
         max_moves = 50
@@ -446,6 +462,52 @@ class TestAutomatedMoves(unittest.TestCase):
 
         # The game should have terminated via game over or win
         self.assertFalse(game.game_over_check())
+
+
+class TestRandomizeBoard(unittest.TestCase):  # ******************************
+    """Unit test for shuffling pegs and randomizing board layouts"""
+
+    def test_shuffle_board_preserves_counts_and_corners(self):
+        for board_type in Board.VALID_TYPES:
+            for size in Board.VALID_SIZES:
+                game = Board(board_type, size)
+                initial_pegs = game.count_pegs()
+                initial_empties = sum(row.count("EMPTY") for row in game.board)
+
+                for _ in range(10):  # 10 trials for randomness
+                    game.shuffle_board()
+
+                    # Verify peg and empty counts remain constant across shuffles
+                    self.assertEqual(game.count_pegs(), initial_pegs)
+                    self.assertEqual(
+                        sum(row.count("EMPTY") for row in game.board), initial_empties
+                    )
+                    self.assertEqual(game.size, size)
+                    self.assertEqual(game.board_type, board_type)
+
+    def test_randomize_layout_generates_playable_boards(self):
+        for board_type in Board.VALID_TYPES:
+            for size in Board.VALID_SIZES:
+                game = Board(board_type, size)
+                layouts = set()
+
+                for _ in range(10):
+                    game.randomize_layout()
+
+                    # Ensure shape and size are maintained
+                    self.assertEqual(game.size, size)
+                    self.assertEqual(game.board_type, board_type)
+
+                    # Ensure at least one empty space exists to keep the game playable
+                    self.assertGreaterEqual(
+                        sum(row.count("EMPTY") for row in game.board), 1
+                    )
+
+                    # Collect layouts to ensure variability across trials
+                    current_layout = tuple(tuple(row) for row in game.board)
+                    layouts.add(current_layout)
+
+                self.assertGreater(len(layouts), 1)
 
 
 class TestGamePersistence(unittest.TestCase):
